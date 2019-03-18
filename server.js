@@ -98,19 +98,19 @@ app.get('/register', function(req, res) {
 /*Add your other get/post request handlers below here: */
 
 app.get('/team_stats',function(req,res){
-	var query1 = 'SELECT * FROM football_games;';
+	var query01 = 'SELECT * FROM football_games;';
 	var query2 = 'SELECT COUNT(visitor_name) FROM football_games WHERE home_score>visitor_score;';
 	var query3 = 'SELECT COUNT(visitor_name) FROM football_games WHERE home_score<visitor_score;';
 	db.task('get-everything', task => {
     	return task.batch([
-        task.any(query1),
+        task.any(query01),
         task.any(query2),
         task.any(query3)
     ]);
 }).then(data => {
 	res.render('pages/team_stats',{
 			my_title: "Team Stats",
-			query1: data[0],
+			query01: data[0],
 			query2: data[1][0].count,
 			query3: data[2][0].count
 		})
@@ -124,27 +124,32 @@ app.get('/player_info',function(req,res){
 	task.any(query)]);}).then(data=> {
 	res.render('pages/player_info',{
 			my_title:"Player Info Page",
-			names: data[0]
+			names: data[0],
+			player_id: '',
+			playerinfo: '',
+			gamecount: ''
 		})
 	})
 });
 
-app.get('player_info/select_player', function(req,res){
-	var query = 'SELECT name, id FROM football_players;';
-	var query2= 'SELECT * FROM football_players WHERE id='+ player_id+';';
-	var query3 = 'SELECT count(players) FROM football_games WHERE '+player_id+' = ANY(players);';
+app.get('/player_info/post', function(req,res){
+	var player_id = req.query.player_choice;
+	var namequery = 'SELECT name, id FROM football_players;';
+	var infoquery= 'SELECT * FROM football_players WHERE id = '+player_id+' ;';
+	var gamecount = 'SELECT count(players) FROM football_games WHERE '+player_id+' = ANY(players);';
 	db.task('get-everything', task=>{
 	return task.batch([
-        task.any(query1),
-        task.any(query2),
-        task.any(query3)
+        task.any(namequery),
+        task.any(infoquery),
+        task.any(gamecount)
     	]);
 }).then(data => {
-	res.render('pages/team_stats',{
-			my_title: "Team Stats",
+	res.render('pages/player_info',{
+			my_title: "Player Info Page",
 			names: data[0],
 			playerinfo: data[1][0],
-			wins: data[2][0].count
+			gamecount: data[2][0].count,
+			player_id: player_id
 		})
 	})
 });
